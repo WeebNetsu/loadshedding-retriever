@@ -101,7 +101,7 @@ proc getSurburbData(id: uint = 342, pageSize: uint = 1000, pageNum: uint = 1): F
 
 
 
-proc getSchedule(suburbId: uint = 1069151, stage: int = 0, provinceId: uint8 = 9, municipalityTotal: uint = 1): Future[XmlNode] {.async.} =
+proc getSchedule(suburbId: uint = 1069151, stage: int = -1, provinceId: uint8 = 9, municipalityTotal: uint = 1): Future[XmlNode] {.async.} =
     #[ 
         1069151 = somerset west mall
 
@@ -113,14 +113,14 @@ proc getSchedule(suburbId: uint = 1069151, stage: int = 0, provinceId: uint8 = 9
     const URL = BASE_URL / "GetScheduleM"
     
     let 
-        # <suburb_id>/<stage>/<province_id>/<municipality_total>
+        # if no actual stage provided, get the current stage, otherwise use the given stage
+        actualStage: int = if stage == -1: await getStage() else: stage
         client = newAsyncHttpClient()
-        callUrl = URL / $suburbId / $stage / $provinceId / $municipalityTotal
+        # <suburb_id>/<stage>/<province_id>/<municipality_total>
+        callUrl = URL / $suburbId / $actualStage / $provinceId / $municipalityTotal
         res = await client.get(callUrl)
         body = await res.body
-        actualStage: int = if stage == 0: await getStage() else: stage
 
-    echo callUrl
     # the body contains HTML, not JSON
     return parseHtml(body)
 
@@ -154,6 +154,7 @@ proc generateSchedule(html: XmlNode, days: uint = 5): LoadsheddingData =
     return data
 
 proc main(): Future[void] {.async.} =
+
     let 
         municipalities: MunicipalityData = await getMuniciplities()
         surburbs: SurburbData = await getSurburbData()

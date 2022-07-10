@@ -8,4 +8,4 @@ Retrieve the current lights out data from the load shedding API
 
 ## Running
 
-`nim c main.nim && ./main`
+`nim -d:ssl c main.nim && ./main`
